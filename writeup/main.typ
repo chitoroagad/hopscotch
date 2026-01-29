@@ -24,7 +24,6 @@
   // date: [October 13–16],
   // venue: [Seoul, Republic of Korea],
 )
-#let doi = "https://doi.org/10.1145/0000000000"
 // #let ccs = (
 //   (
 //     generic: [Software and its engineering],
@@ -41,7 +40,7 @@
   authors: authors,
   // control max number of columns for authors and affiliation
   // conference: conference,
-  // doi: doi,
+  doi: none,
   // copyright: "cc",
   // Set review to submission ID for the review process or to "none" for the final version.
   // review: [\#001],
