@@ -48,7 +48,9 @@
           # add them to PYTHONPATH and thus make them accessible from within the venv.
           python-nmap
 
-          pkgs.texlivePackages.libertine
+          # fonts for writeup
+          pkgs.libertine
+          pkgs.inconsolata
         ];
 
         # Run this command, only after creating the virtual environment

@@ -17,8 +17,8 @@
     fontPaths = [
       # Add paths to fonts here
       # "${pkgs.roboto}/share/fonts/truetype"
-      "${pkgs.libertine}/share/fonts/public/truetype"
-      "${pkgs.texlivePackages.libertine}/share/fonts/truetype/public"
+      "${pkgs.libertine}/share/fonts/opentype/public"
+      "${pkgs.inconsolata}/share/fonts/truetype/inconsolata"
     ];
 
     virtualPaths = [
@@ -30,13 +30,7 @@
     ];
   };
 
-  unstable_typstPackages = [
-    {
-      name = "clean-acmart";
-      version = "0.0.1";
-      hash = "sha256-47fCSfp+0a052skuRhs7fO1YbnCIcu1jFAY/FpnIi64=";
-    }
-  ];
+  unstable_typstPackages = [];
 
   # Compile a Typst project, *without* copying the result
   # to the current directory

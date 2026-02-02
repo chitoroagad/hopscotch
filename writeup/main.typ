@@ -1,4 +1,4 @@
-#import "@preview/clean-acmart:0.0.1": (
+#import "acmart-template.typ": (
   acmart, acmart-ccs, acmart-keywords, acmart-ref, to-string,
 )
 
@@ -40,10 +40,12 @@
   authors: authors,
   // control max number of columns for authors and affiliation
   // conference: conference,
-  doi: none,
-  // copyright: "cc",
+  doi: "nice",
+  copyright: none,
   // Set review to submission ID for the review process or to "none" for the final version.
   // review: [\#001],
+  ncols-authors: 1,
+  ncols-body: 2,
 )
 
 
