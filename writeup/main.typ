@@ -267,6 +267,28 @@ Nmap #sym.arrow Normalise #sym.arrow Feature Groups #sym.arrow Embeddings #sym.a
 
 Similarity vs baseline #sym.arrow Drift / Anomaly score #sym.arrow LLM takes action / summary
 
+= More Ideas
+== Using `tcpdump`:
+- TTL variance per source IP
+- TCP handshake anomalies
+- Inconsisten IP ID behaviour
+
+Spoofing indicators:
+- Same source IP #sym.arrow different TTLs
+- SYNs that never complete handshakes
+- No response to challenge ACKs
+
+_Would probably need to heavily filer the packets that make it to our model._
+
+== Using `traceroute`:
+- Path stability checks
+- Comparing route to claimed source ASN
+
+Indicators:
+- Traceroute path doesn't make sense for source IPs ASN.
+- Same IP #sym.arrow different paths in short time.
+
+
 #bibliography(
   "refs.bib",
   title: "References",
