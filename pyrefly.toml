@@ -1,0 +1,3 @@
+python-platform = "linux"
+
+project-includes = ["src/**/*.py"]

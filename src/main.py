@@ -104,50 +104,6 @@ def jsonify(f: TextIO):
         print(f.name)
 
 
-def normalise_data(host_data: dict) -> dict:
-    out = {}
-    os: dict = host_data.get("os")
-    if not os:
-        logging.warning("No 'os' key in host_data")
-    else:
-        osmatch: dict | list = os.get("osmatch")
-        if not osmatch:
-            logging.warning("No 'osmatch' key in host_data['os']")
-        if isinstance(osmatch, list):
-            osmatch = osmatch[0]
-        else:
-            osclass: dict | list = osmatch.get("osclass")
-            if not osclass:
-                logging.warning("No 'osclass' key in host_data['os']['osmatch']")
-            if isinstance(osclass, list):
-                osclass = osclass[0]
-            else:
-                os_type = osclass.get("@type")
-                os_name = (
-                    osclass.get("@vendor")
-                    if osclass.get("@vendor")
-                    else osclass.get("@osfamily")
-                )
-                os_gen = osclass.get("@osgen")
-                os_distribution = osmatch.get("@name")
-                out["os"] = os_name
-                out["os_version"] = os_gen
-                out["os_type"] = os_type
-                out["distribution"] = os_distribution
-    address = host_data.get("address")
-    if not address:
-        logging.warning("No 'address' key in host_data")
-    else:
-        device_vendor = None
-        for addrs in address:
-            if "mac" in addrs:
-                device_vendor = addrs.get("@vendor")
-        if not device_vendor:
-            logging.warning("Device_vendor not found")
-        out["device_vendor"] = device_vendor
-    return out
-
-
 def parse_filename(name: str) -> str:
     "Splits the name by dir separator then shaves off xml file extension"
     return os.path.split(name)[1][:-4]

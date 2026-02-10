@@ -23,7 +23,7 @@ class NmapParser:
         self._extract_device_vendor()
         self._extract_ports()
 
-    def _first_item(self, val: dict | list) -> dict:
+    def _first_item(self, val: dict | list | None) -> dict | None:
         if isinstance(val, list):
             return val[0] if val else None
         return val
@@ -33,11 +33,11 @@ class NmapParser:
         if not os_data:
             logging.warning("No 'os' key in input data")
         else:
-            osmatch: dict = self._first_item(os_data.get("osmatch"))
+            osmatch: dict | None = self._first_item(os_data.get("osmatch"))
             if not osmatch:
                 logging.warning("No 'osmatch' key in host_data['os']")
             else:
-                osclass: dict = self._first_item(osmatch.get("osclass"))
+                osclass: dict | None = self._first_item(osmatch.get("osclass"))
                 if not osclass:
                     logging.warning("No 'osclass' key in host_data['os']['osmatch']")
                 else:
@@ -54,6 +54,7 @@ class NmapParser:
 
     def _extract_device_vendor(self):
         address = self.raw_data.get("address")
+        vendor = None
         if not address:
             logging.warning("No 'address' key in input data")
         else:
@@ -93,7 +94,7 @@ class NmapParser:
             logging.warning("No 'port' field found in ports map")
             return
 
-        open_ports, services = self._find_ports(ports_list)
+        services, open_ports  = self._find_ports(ports_list)
         self.normalised_data.update({"open_ports": open_ports, "services": services})
 
     def _find_ports(self, ports: dict | list) -> PortsInfo:
@@ -111,7 +112,7 @@ class NmapParser:
             if port_open:
                 open_ports.append(portid)
 
-        return PortsInfo(open_ports, services)
+        return PortsInfo(services, open_ports)
 
     def _check_port(self, port) -> PortInfo:
         portid = port.get("@portid")
@@ -142,4 +143,4 @@ class NmapParser:
         open_port = False
         if state == "open":
             open_port = True
-        return PortInfo(portid, service, open_port)
+        return PortInfo(portid, service if service else "", open_port)
