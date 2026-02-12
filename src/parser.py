@@ -1,19 +1,28 @@
+from ipaddress import ip_address
+import ipaddress
+from ipaddress import IPv6Address
+from ipaddress import IPv4Address
+from typing import Optional
 import logging
 from typing import NamedTuple
 
 
-class PortsInfo(NamedTuple):
-    services: dict[int, str]
-    open_ports: list[int]
-
-
-class PortInfo(NamedTuple):
-    portid: int
-    service: str
-    open_port: bool
-
-
 class NmapParser:
+    class PortsInfo(NamedTuple):
+        services: dict[int, str]
+        open_ports: list[int]
+
+    class PortInfo(NamedTuple):
+        portid: int
+        service: str
+        open_port: bool
+
+    class VendorAddresses(NamedTuple):
+        vendor: Optional[str]
+        mac: Optional[str]
+        ipv4: Optional[IPv4Address]
+        ipv6: Optional[IPv6Address]
+
     def __init__(self, host_data: dict):
         self.raw_data = host_data
         self.normalised_data = {}
@@ -37,7 +46,7 @@ class NmapParser:
         else:
             osmatch: dict | None = self._first_item(os_data.get("osmatch"))
             if not osmatch:
-                logging.warning("No 'osmatch' key in host_data['os']")
+                logging.warning(f"No 'osmatch' key in {os_data}")
             else:
                 osclass: dict | None = self._first_item(osmatch.get("osclass"))
                 if not osclass:
@@ -55,44 +64,74 @@ class NmapParser:
                     )
 
     def _extract_device_vendor_and_address(self):
-        address = self.raw_data.get("address")
+        address_field = self.raw_data.get("address")
         vendor = None
-        mac_address = None
-        if not address:
+        mac = None
+        ipv4 = None
+        ipv6 = None
+        if not address_field:
             logging.warning("No 'address' key in input data")
         else:
-            vendor, mac_address = self._find_device_vendor_and_address(address)
+            vendor_address = self._find_device_vendor_and_address(address_field)
+            if vendor_address is not None:
+                vendor, mac, ipv4, ipv6 = vendor_address
         self.normalised_data["device_vendor"] = vendor
-        self.normalised_data["mac_address"] = mac_address
+        self.normalised_data["mac"] = mac
+        self.normalised_data["ipv4"] = str(ipv4)
+        self.normalised_data["ipv6"] = str(ipv6)
 
-    def _find_device_vendor_and_address(self, address):
+    def _find_device_vendor_and_address(self, address) -> Optional[VendorAddresses]:
         address_iter = address if isinstance(address, list) else [address]
+        vendor = None
+        mac = None
+        ipv4 = None
+        ipv6 = None
         for addr in address_iter:
-            vendor, mac_address = self._check_address_and_vendor(addr)
-            if not vendor:
+            vendor_addresses = self._check_address_and_vendor(addr)
+            if vendor_addresses is None:
                 continue
-            if not mac_address:
-                logging.error(f"No mac_address found for {address}")
-                continue
-            return vendor, mac_address
-        logging.warning(f"No valid address found for {address}")
-        return None, None
 
-    def _check_address_and_vendor(self, addr: dict):
+            tmp_vendor, tmp_mac, tmp_ipv4, tmp_ipv6 = vendor_addresses
+            vendor = tmp_vendor if tmp_vendor else vendor
+            mac = tmp_mac if tmp_mac else mac
+            ipv4 = tmp_ipv4 if tmp_ipv4 else ipv4
+            ipv6 = tmp_ipv6 if tmp_ipv6 else ipv6
+
+        if mac is None:
+            logging.warning(f"No valid MAC address found for {address_iter}")
+        return self.VendorAddresses(vendor, mac, ipv4, ipv6)
+
+    def _check_address_and_vendor(self, addr: dict) -> Optional[VendorAddresses]:
         addrtype = addr.get("@addrtype")
         if not addrtype:
             logging.warning(f"No '@addrtype' in address: {addr}")
-            return None, None
+            return None
 
         vendor = None
-        mac_address = None
+        mac = None
+        ipv4 = None
+        ipv6 = None
         if addrtype == "mac":
             vendor = addr.get("@vendor")
             if not vendor:
                 logging.warning(f"No '@vendor' key in mac address: {addr}")
-            mac_address = addr.get("@addr")
+            mac = addr.get("@addr")
+        if "ip" in addrtype:
+            ip = addr.get("@addr")
+            if not ip:
+                logging.error("No IP address found")
+                return None
 
-        return vendor, mac_address
+            try:
+                ip_parsed = ip_address(ip)
+                if isinstance(ip_parsed, IPv4Address):
+                    ipv4 = ip_parsed
+                elif isinstance(ip_parsed, IPv6Address):
+                    ipv6 = ip_parsed
+            except ValueError as e:
+                logging.error(f"Could not parse IP address: {ip}: {e}")
+
+        return self.VendorAddresses(vendor, mac, ipv4, ipv6)
 
     def _extract_ports(self):
         # excludes the "extra ports" field
@@ -102,7 +141,7 @@ class NmapParser:
             return
         ports_list = ports.get("port")
         if not ports_list:
-            logging.warning("No 'port' field found in ports map")
+            logging.warning(f"No 'port' field found in ports map: {ports}")
             return
 
         services, open_ports = self._find_ports(ports_list)
@@ -123,7 +162,7 @@ class NmapParser:
             if port_open:
                 open_ports.append(portid)
 
-        return PortsInfo(services, open_ports)
+        return self.PortsInfo(services, open_ports)
 
     def _check_port(self, port) -> PortInfo:
         portid = port.get("@portid")
@@ -154,4 +193,4 @@ class NmapParser:
         open_port = False
         if state == "open":
             open_port = True
-        return PortInfo(portid, service if service else "", open_port)
+        return self.PortInfo(portid, service if service else "", open_port)

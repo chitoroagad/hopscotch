@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 from embedder import Embedder
-from typing import NamedTuple
 import glob
 import json
 import logging
@@ -57,9 +56,11 @@ for file_path in prompt_dir.iterdir():
 
 logging.basicConfig(
     filename="app.log",
+    filemode="w",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
+
 
 def say_hi_test():
     "Simple test to check what each chat model outputs based on the system prompt"
@@ -122,9 +123,8 @@ if __name__ == "__main__":
             for host in data:
                 parser = NmapParser(host)
                 normalised_data = parser.parse()
-                embedder = Embedder("all-minilm:22m")
-                mac = normalised_data['mac_address']
-                embeddings = embedder.embed(normalised_data)
                 pprint(normalised_data)
-                pprint(embeddings)
+                embedder = Embedder("all-minilm:22m")
+                embeddings = embedder.embed(normalised_data)
+                # pprint(embeddings)
                 print("\n=========================\n")

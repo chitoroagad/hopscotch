@@ -41,11 +41,9 @@ class Embedder:
         return f"port {port} runs {protocol} server {service}\n"
 
     def _prep_to_embed(self, host):
-        if "os" not in host:
-            return
-
         services = ""
         open_ports = ""
+        os = ""
 
         if "services" in host:
             for port, service in host["services"].items():
@@ -54,8 +52,20 @@ class Embedder:
         if "open_ports" in host:
             open_ports = f"open tcp ports: {host['open_ports']}"
 
+        if "os" in host:
+            os += f"this host is os: {host['os']}\n"
+
+        if "os_version" in host:
+            os += f"version: {host['os_version']}\n"
+
+        if "distribution" in host:
+            os += f"distribution: {host['distribution']}\n"
+
+        if "device_vendor" in host:
+            os += f"device_vendor: {host['device_vendor']}"
+
         return self.HostPreEmbedding(
-            f"this host is os: {host['os']}\nversion: {host['os_version']}\ndistribution: {host['distribution']}\ndevice_vendor: {host['device_vendor']}",
+            os,
             open_ports,
             services,
         )
