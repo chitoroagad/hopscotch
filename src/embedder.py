@@ -1,6 +1,9 @@
-from typing import NamedTuple
 import logging
+from typing import NamedTuple
+
 from langchain_ollama import OllamaEmbeddings
+
+from parser import NormalisedData
 
 
 class Embedder:
@@ -40,29 +43,13 @@ class Embedder:
         service = service_split[1]
         return f"port {port} runs {protocol} server {service}\n"
 
-    def _prep_to_embed(self, host):
+    def _prep_to_embed(self, host: NormalisedData):
         services = ""
-        open_ports = ""
-        os = ""
+        open_ports = f"open tcp ports: {host.open_ports}"
+        os = f"this host is os: {host.os}\nversion: {host.os_version}\ndistribution: {host.distribution}\ndevice_vendor: {host.device_vendor}"
 
-        if "services" in host:
-            for port, service in host["services"].items():
-                services += self._format_service_preembedding(port, service)
-
-        if "open_ports" in host:
-            open_ports = f"open tcp ports: {host['open_ports']}"
-
-        if "os" in host:
-            os += f"this host is os: {host['os']}\n"
-
-        if "os_version" in host:
-            os += f"version: {host['os_version']}\n"
-
-        if "distribution" in host:
-            os += f"distribution: {host['distribution']}\n"
-
-        if "device_vendor" in host:
-            os += f"device_vendor: {host['device_vendor']}"
+        for port, service in host.services.items():
+            services += self._format_service_preembedding(port, service)
 
         return self.HostPreEmbedding(
             os,

@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-from embedder import Embedder
 import glob
 import json
 import logging
@@ -14,6 +13,7 @@ import xmltodict
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, SystemMessage
 
+from embedder import Embedder
 from parser import NmapParser
 
 UNIMPORTANT_NMAP_FIELDS = [

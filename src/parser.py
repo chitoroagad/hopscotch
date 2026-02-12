@@ -1,10 +1,20 @@
-from ipaddress import ip_address
-import ipaddress
-from ipaddress import IPv6Address
-from ipaddress import IPv4Address
-from typing import Optional
 import logging
-from typing import NamedTuple
+from ipaddress import IPv4Address, IPv6Address, ip_address
+from typing import NamedTuple, Optional
+
+from pydantic import BaseModel, Field
+
+
+class NormalisedData(BaseModel):
+    mac_address: str = Field(default="unkown")
+    ipv4: str = Field(default="unkown")
+    ipv6: str = Field(default="unkown")
+    os: str = Field(default="unkown")
+    os_version: str = Field(default="unkown")
+    distribution: str = Field(default="unkown")
+    device_vendor: str = Field(default="unkown")
+    open_ports: list[int] = Field(default=[])
+    services: dict[int, str] = Field(default={})
 
 
 class NmapParser:
@@ -27,12 +37,17 @@ class NmapParser:
         self.raw_data = host_data
         self.normalised_data = {}
 
-    def parse(self):
+    def parse(self) -> NormalisedData:
         self._extract_os_data()
         self._extract_device_vendor_and_address()
         self._extract_ports()
+        self.normalised_data = {
+            k: v for k, v in self.normalised_data.items() if v is not None
+        }
 
-        return self.normalised_data
+        out = NormalisedData.model_validate(self.normalised_data, strict=True)
+
+        return out
 
     def _first_item(self, val: dict | list | None) -> dict | None:
         if isinstance(val, list):
@@ -77,8 +92,8 @@ class NmapParser:
                 vendor, mac, ipv4, ipv6 = vendor_address
         self.normalised_data["device_vendor"] = vendor
         self.normalised_data["mac"] = mac
-        self.normalised_data["ipv4"] = str(ipv4)
-        self.normalised_data["ipv6"] = str(ipv6)
+        self.normalised_data["ipv4"] = str(ipv4) if ipv4 else None
+        self.normalised_data["ipv6"] = str(ipv6) if ipv6 else None
 
     def _find_device_vendor_and_address(self, address) -> Optional[VendorAddresses]:
         address_iter = address if isinstance(address, list) else [address]
@@ -168,6 +183,7 @@ class NmapParser:
         portid = port.get("@portid")
         if not portid:
             logging.warning(f"No '@portid' found for port: {port}")
+        portid = int(portid)
 
         state_map = port.get("state")
         state = None
